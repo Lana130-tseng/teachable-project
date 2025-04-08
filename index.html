@@ -12,7 +12,7 @@
 </head>
 <body>
     <h1>手勢辨識魔法石遊戲</h1>
-    <video id="webcam" autoplay width="320" height="240"></video>
+    <div id="webcam-container"></div>
     <div id="label">辨識中...</div>
     <img id="fireImg" src="https://lana130-tseng.github.io/teachable-project/fire.jpg">
     <img id="waterImg" src="https://lana130-tseng.github.io/teachable-project/water.jpg">
@@ -34,7 +34,7 @@
             await webcam.play();
             window.requestAnimationFrame(loop);
 
-            document.getElementById("webcam").appendChild(webcam.canvas);
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
         }
 
         async function loop() {
@@ -45,7 +45,7 @@
 
         async function predict() {
             const prediction = await model.predict(webcam.canvas);
-            const label = prediction[0].label;
+            const label = prediction[0].className;
 
             document.getElementById("label").innerText = `辨識結果：${label}`;
 
