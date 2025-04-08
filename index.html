@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Teachable Machine </title>
+    <title>Teachable Machine 圖像辨識</title>
     <style>
         img {
             width: 300px;
@@ -12,30 +12,43 @@
 </head>
 <body>
     <h1>手勢辨識魔法石遊戲</h1>
+    <button type="button" onclick="init()">啟動辨識</button>
     <div id="webcam-container"></div>
-    <div id="label">辨識中...</div>
-    <p id="summon-message"></p>
-    <img id="fireImg" src="https://lana130-tseng.github.io/teachable-project/fire.jpg">
-    <img id="waterImg" src="https://lana130-tseng.github.io/teachable-project/water.jpg">
-    <img id="grassImg" src="https://lana130-tseng.github.io/teachable-project/grass.jpg">
+    <div id="label-container"></div>
+    <p id="message"></p>
+    <img id="fireImg" src="fire.jpg">
+    <img id="waterImg" src="water.jpg">
+    <img id="grassImg" src="grass.jpg">
 
-    <!-- 引入 Teachable Machine 模型套件 -->
-
+    <!-- 模型與 TensorFlow.js 套件 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
     <script>
-        const URL = "https://teachablemachine.withgoogle.com/models/S0LLmu9jC/";  // 你的 Teachable Machine 模型網址
-        let model, webcam;
+        const URL = "https://teachablemachine.withgoogle.com/models/S0LLmu9jC/";
+
+        let model, webcam, labelContainer, maxPredictions;
 
         async function init() {
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
 
+            // 載入模型與標籤
             model = await tmImage.load(modelURL, metadataURL);
-            webcam = new tmImage.Webcam(320, 240, true); // Flip the webcam for mirror effect
+            maxPredictions = model.getTotalClasses();
+
+            // 建立 webcam
+            webcam = new tmImage.Webcam(300, 300, true);
             await webcam.setup();
             await webcam.play();
             window.requestAnimationFrame(loop);
 
             document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+            // 建立標籤欄位
+            labelContainer = document.getElementById("label-container");
+            for (let i = 0; i < maxPredictions; i++) {
+                labelContainer.appendChild(document.createElement("div"));
+            }
         }
 
         async function loop() {
@@ -46,29 +59,35 @@
 
         async function predict() {
             const prediction = await model.predict(webcam.canvas);
-            const label = prediction[0].className;
-            const probability = prediction[0].probability;
 
-            document.getElementById("label").innerText = `辨識結果：${label} - 機率：${(probability * 100).toFixed(2)}%`;
+            // 顯示預測結果
+            for (let i = 0; i < maxPredictions; i++) {
+                const classPrediction = prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(2) + "%";
+                labelContainer.childNodes[i].innerHTML = classPrediction;
+            }
 
-            // 隱藏所有圖片
+            // 隱藏所有圖片與文字
             document.getElementById("fireImg").style.display = "none";
             document.getElementById("waterImg").style.display = "none";
             document.getElementById("grassImg").style.display = "none";
-            document.getElementById("summon-message").innerText = "";
+            document.getElementById("message").innerText = "";
 
-            if (label === "nothing" && probability >= 0.8) {
-                document.getElementById("summon-message").innerText = "火、水、艸，召喚!";
-            } else if (label === "fire" && probability >= 0.8) {
-                document.getElementById("fireImg").style.display = "block";
-            } else if (label === "water" && probability >= 0.8) {
-                document.getElementById("waterImg").style.display = "block";
-            } else if (label === "grass" && probability >= 0.8) {
-                document.getElementById("grassImg").style.display = "block";
+            // 根據預測顯示圖片或文字
+            for (let i = 0; i < prediction.length; i++) {
+                const label = prediction[i].className;
+                const prob = prediction[i].probability;
+
+                if (label === "nothing" && prob >= 0.8) {
+                    document.getElementById("message").innerText = "火、水、艸，召喚!";
+                } else if (label === "fire" && prob >= 0.8) {
+                    document.getElementById("fireImg").style.display = "block";
+                } else if (label === "water" && prob >= 0.8) {
+                    document.getElementById("waterImg").style.display = "block";
+                } else if (label === "grass" && prob >= 0.8) {
+                    document.getElementById("grassImg").style.display = "block";
+                }
             }
         }
-
-        init();
     </script>
 </body>
 </html>
