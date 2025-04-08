@@ -1,75 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Teachable Machine Image Model - p5.js and ml5.js</title>
-  <script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/p5.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/p5@latest/lib/addons/p5.dom.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ml5@latest/dist/ml5.min.js"></script>
+    <title>Teachable Machine 手勢辨識遊戲</title>
+    <style>
+        img {
+            width: 300px;
+            height: auto;
+            display: none;
+        }
+    </style>
 </head>
 <body>
-  <script type="text/javascript">
-    // Classifier Variable
-    let classifier;
-    // Model URL
-    let imageModelURL = './my_model/';
-    
-    // Video
-    let video;
-    let flippedVideo;
-    // To store the classification
-    let label = "";
+    <h1>手勢辨識魔法石遊戲</h1>
+    <video id="webcam" autoplay width="320" height="240"></video>
+    <div id="label">辨識中...</div>
+    <img id="fireImg" src="魔法石-01.jpg">
+    <img id="waterImg" src="魔法石-02.jpg">
+    <img id="grassImg" src="魔法石-03.jpg">
 
-    // Load the model first
-    function preload() {
-      classifier = ml5.imageClassifier(imageModelURL + 'model.json');
-    }
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
+    <script>
+        const URL = "./";  // 你的模型檔案所在的資料夾位置
+        let model, webcam;
 
-    function setup() {
-      createCanvas(320, 260);
-      // Create the video
-      video = createCapture(VIDEO);
-      video.size(320, 240);
-      video.hide();
+        async function init() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
 
-      flippedVideo = ml5.flipImage(video);
-      // Start classifying
-      classifyVideo();
-    }
+            model = await tmImage.load(modelURL, metadataURL);
+            webcam = new tmImage.Webcam(320, 240, true);
+            await webcam.setup();
+            await webcam.play();
+            window.requestAnimationFrame(loop);
 
-    function draw() {
-      background(0);
-      // Draw the video
-      image(flippedVideo, 0, 0);
+            document.getElementById("webcam").appendChild(webcam.canvas);
+        }
 
-      // Draw the label
-      fill(255);
-      textSize(16);
-      textAlign(CENTER);
-      text(label, width / 2, height - 4);
-    }
+        async function loop() {
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
 
-    // Get a prediction for the current video frame
-    function classifyVideo() {
-      flippedVideo = ml5.flipImage(video)
-      classifier.classify(flippedVideo, gotResult);
-      flippedVideo.remove();
-    }
+        async function predict() {
+            const prediction = await model.predict(webcam.canvas);
+            const label = prediction[0].label;
 
-    // When we get a result
-    function gotResult(error, results) {
-      // If there is an error
-      if (error) {
-        console.error(error);
-        return;
-      }
-      // The results are in an array ordered by confidence.
-      // console.log(results[0]);
-      label = results[0].label;
-      // Classifiy again!
-      classifyVideo();
-    }
-  </script>
+            document.getElementById("label").innerText = `辨識結果：${label}`;
+
+            // 隱藏所有圖片
+            document.getElementById("fireImg").style.display = "none";
+            document.getElementById("waterImg").style.display = "none";
+            document.getElementById("grassImg").style.display = "none";
+
+            // 根據辨識結果顯示對應的圖片
+            if (label === "火") document.getElementById("fireImg").style.display = "block";
+            if (label === "水") document.getElementById("waterImg").style.display = "block";
+            if (label === "艸") document.getElementById("grassImg").style.display = "block";
+        }
+
+        init();
+    </script>
 </body>
 </html>
