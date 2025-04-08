@@ -14,15 +14,16 @@
     <h1>手勢辨識魔法石遊戲</h1>
     <div id="webcam-container"></div>
     <div id="label">辨識中...</div>
-    <img id="fireImg" src="fire.jpg">
-    <img id="waterImg" src="water.jpg">
-    <img id="grassImg" src="grass.jpg">
+    <p id="summon-message"></p>
+    <img id="fireImg" src="https://lana130-tseng.github.io/teachable-project/fire.jpg">
+    <img id="waterImg" src="https://lana130-tseng.github.io/teachable-project/water.jpg">
+    <img id="grassImg" src="https://lana130-tseng.github.io/teachable-project/grass.jpg">
 
     <!-- 引入 Teachable Machine 模型套件 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
     <script>
-        const URL = "https://teachablemachine.withgoogle.com/models/KvZ_3D5M9/";  // 你的 Teachable Machine 模型網址
+        const URL = "https://teachablemachine.withgoogle.com/models/S0LLmu9jC/";  // 你的 Teachable Machine 模型網址
         let model, webcam;
 
         async function init() {
@@ -47,18 +48,25 @@
         async function predict() {
             const prediction = await model.predict(webcam.canvas);
             const label = prediction[0].className;
+            const probability = prediction[0].probability;
 
-            document.getElementById("label").innerText = `辨識結果：${label}`;
+            document.getElementById("label").innerText = `辨識結果：${label} - 機率：${(probability * 100).toFixed(2)}%`;
 
             // 隱藏所有圖片
             document.getElementById("fireImg").style.display = "none";
             document.getElementById("waterImg").style.display = "none";
             document.getElementById("grassImg").style.display = "none";
+            document.getElementById("summon-message").innerText = "";
 
-            // 根據辨識結果顯示對應的圖片
-            if (label === "火") document.getElementById("fireImg").style.display = "block";
-            if (label === "水") document.getElementById("waterImg").style.display = "block";
-            if (label === "艸") document.getElementById("grassImg").style.display = "block";
+            if (label === "nothing" && probability >= 0.8) {
+                document.getElementById("summon-message").innerText = "火、水、艸，召喚!";
+            } else if (label === "fire" && probability >= 0.8) {
+                document.getElementById("fireImg").style.display = "block";
+            } else if (label === "water" && probability >= 0.8) {
+                document.getElementById("waterImg").style.display = "block";
+            } else if (label === "grass" && probability >= 0.8) {
+                document.getElementById("grassImg").style.display = "block";
+            }
         }
 
         init();
