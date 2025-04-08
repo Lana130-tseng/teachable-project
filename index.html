@@ -32,11 +32,9 @@
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
 
-            // 載入模型與標籤
             model = await tmImage.load(modelURL, metadataURL);
             maxPredictions = model.getTotalClasses();
 
-            // 建立 webcam
             webcam = new tmImage.Webcam(300, 300, true);
             await webcam.setup();
             await webcam.play();
@@ -44,7 +42,6 @@
 
             document.getElementById("webcam-container").appendChild(webcam.canvas);
 
-            // 建立標籤欄位
             labelContainer = document.getElementById("label-container");
             for (let i = 0; i < maxPredictions; i++) {
                 labelContainer.appendChild(document.createElement("div"));
@@ -60,19 +57,16 @@
         async function predict() {
             const prediction = await model.predict(webcam.canvas);
 
-            // 顯示預測結果
             for (let i = 0; i < maxPredictions; i++) {
                 const classPrediction = prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(2) + "%";
                 labelContainer.childNodes[i].innerHTML = classPrediction;
             }
 
-            // 隱藏所有圖片與文字
             document.getElementById("fireImg").style.display = "none";
             document.getElementById("waterImg").style.display = "none";
             document.getElementById("grassImg").style.display = "none";
             document.getElementById("message").innerText = "";
 
-            // 根據預測顯示圖片或文字
             for (let i = 0; i < prediction.length; i++) {
                 const label = prediction[i].className;
                 const prob = prediction[i].probability;
